@@ -51,9 +51,13 @@ def gather_metadata(event_list):
     for event in event_list:
         if is_event_maintenance(event) or not event["Tach Total"]:
             continue
-        if not first_event or parse_datestamp(event["Start"]) < parse_datestamp(first_event["Start"]):
+        if not first_event or parse_datestamp(event["Start"]) < parse_datestamp(
+            first_event["Start"]
+        ):
             first_event = event
-        if not last_event or parse_datestamp(event["End"]) > parse_datestamp(last_event["End"]):
+        if not last_event or parse_datestamp(event["End"]) > parse_datestamp(
+            last_event["End"]
+        ):
             last_event = event
 
     start_date = first_event["Start"]
@@ -86,6 +90,14 @@ def airport_utilization(event_list):
     results = Counter()
     for event in event_list:
         results[event["Location"]] += 1
+    return results
+
+
+def airport_utilization_by_hours(event_list):
+    results = Counter()
+    for event in event_list:
+        if event["Tach Total"]:
+            results[event["Location"]] += float(event["Tach Total"])
     return results
 
 
@@ -148,9 +160,7 @@ def usage_by_weekday(event_list):
     return day_of_week_by_name
 
 
-def aircraft_available_by_airport_and_weekday(
-    event_list, aircraft, airports
-):
+def aircraft_available_by_airport_and_weekday(event_list, aircraft, airports):
     aircraft_per_airport, mod = divmod(len(aircraft), len(airports))
     if mod != 0:
         raise Exception("Uneven aircraft distribution!")
@@ -219,12 +229,14 @@ def gather_aircraft(events):
             aircraft.append(evt["Aircraft"])
     return aircraft
 
+
 def gather_locations(events):
     locations = []
     for evt in events:
         if evt["Location"] not in locations:
             locations.append(evt["Location"])
     return locations
+
 
 def load_events(csvfile):
     reader = csv.DictReader(csvfile)
@@ -254,6 +266,7 @@ dataset = {}
 dataset["dataset_metadata"] = gather_metadata(events)
 dataset["weekend_weekday_utilization"] = weekend_weekday_utilization(events)
 dataset["airport_utilization"] = airport_utilization(events)
+dataset["airport_utilization_by_hours"] = airport_utilization_by_hours(events)
 dataset["length_of_reservation_by_hours"] = length_histogram(events)
 dataset["days_between_usage_by_aircraft"] = days_between_usage(events)
 dataset["usage_by_weekday"] = usage_by_weekday(events)
